@@ -1,0 +1,17 @@
+{
+  "name": "drawers",
+  "version": "1.0.0",
+  "description": "collaborative whiteboarding",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jeremy Kent",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "express-ws": "^4.0.0",
+    "mongoose": "^5.3.8",
+    "websocket": "^1.0.28"
+  }
+}
