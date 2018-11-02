@@ -2,9 +2,12 @@
 
 ## collaborative whiteboard sketching system
 
-``` npm install ```
-
-``` nodemon app.js ```
+```
+git clone https://github.com/ibiwan/drawers.git
+cd drawers
+npm install
+nodemon app.js 
+```
 
 Access ``` http://localhost:3000 ``` from a browser.  Or two browsers.
 
