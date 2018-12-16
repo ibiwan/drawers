@@ -1,3 +1,5 @@
+/* global d3 */
+
 const padding = 50;
 const stroke = 3;
 const w = 1000;
@@ -5,10 +7,22 @@ const h = 700;
 
 const translate = (x, y) => `translate(${x}, ${y})`;
 
+const pens = {
+  default: {
+    width: 3,
+    color: "black",
+    fill:  "none",
+  }
+}
+const defaultPen = 'default';
+const getPen = pen => pens[pen in pens ? pen : defaultPen];
+
 const makeId = () =>
   Math.random()
     .toString(36)
     .substring(3);
+
+const makeColor = () => '#' + (Math.random().toString(16) + "000000").substring(2,8);
 
 const makeSvg = () =>
   d3
@@ -24,7 +38,7 @@ const encode = d3
   .y(d => d.y)
   .curve(d3.curveNatural);
 
-let socket = new WebSocket("ws://" + location.host);
+let socket = new WebSocket("wss://" + location.host);
 
 const drawStrokes = (svg, strokes) => {
   svg.selectAll("path").remove();
@@ -33,10 +47,10 @@ const drawStrokes = (svg, strokes) => {
     .data(Object.values(strokes))
     .enter()
     .append("path")
-    .attr("id", stroke => stroke.id)
-    .attr("stroke", "black")
-    .attr("fill", "none")
-    .attr("stroke-width", 3)
+    .attr("id", id => id)
+    .attr("stroke", ({pen}) => getPen(pen).color)
+    .attr("fill", ({pen}) => getPen(pen).fill )
+    .attr("stroke-width", ({pen}) =>  getPen(pen).width)
     .attr("stroke-linejoin", "round")
     .attr("stroke-linecap", "round")
     .attr("d", stroke => encode(stroke.points));
@@ -60,9 +74,22 @@ socket.onopen = () => {
         })
         .on("start", () => {
           const { x, y } = d3.event;
+          
+          const pen = {
+            type: 'pen',
+            id: makeId(),
+            ...pens[defaultPen],
+            color: makeColor(),
+          };
+          
+          pens[pen.id] = pen;
+          
+          socket.send(JSON.stringify(pen));
 
           const stroke = {
+            type: 'stroke',
             id: makeId(),
+            pen: pen.id,
             points: [{ x, y }]
           };
 
@@ -78,8 +105,17 @@ socket.onopen = () => {
     );
 
     socket.onmessage = m => {
-      const stroke = JSON.parse(m.data);
-      strokes[stroke.id] = stroke;
+      const entity = JSON.parse(m.data);
+      switch(entity.type)
+      {
+        case 'stroke':
+          strokes[entity.id] = entity;
+          break;          
+        case 'pen':
+          pens[entity.id] = entity;
+          break;
+      }
+      
       drawStrokes(svg, strokes);
     };
   })();
